@@ -30,7 +30,7 @@ interface AppContextType {
   completeSale: () => Promise<void>;
   completedSales: CompletedSale[];
   isInitialized: boolean;
-  refreshInventory: () => void;
+  resetCurrentSale: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -229,7 +229,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     try {
         await addDoc(collection(firestore, 'completedSales'), newSale);
-        // This is the crucial part: clear the sale right after it's saved.
         clearSale(); 
     } catch (error) {
         console.error("Error adding sale to Firestore: ", error);
@@ -242,12 +241,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   }, [saleItems, clearSale, firestore, toast]);
 
-  const refreshInventory = useCallback(() => {
+  const resetCurrentSale = useCallback(() => {
+    clearSale();
     toast({
-      title: "Actualizado",
-      description: "El inventario se actualiza en tiempo real."
+      title: "Nueva Venta",
+      description: "El registro de venta ha sido limpiado."
     })
-  }, [toast]);
+  }, [clearSale, toast]);
 
 
   const value = {
@@ -255,7 +255,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addProduct,
     updateProduct,
     deleteProduct,
-    refreshInventory,
+    resetCurrentSale,
     saleItems,
     addItemToSale,
     removeItemFromSale,
