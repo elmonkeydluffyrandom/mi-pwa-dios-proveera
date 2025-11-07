@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RotateCw, BarChart3 } from 'lucide-react';
+import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RotateCw, BarChart3, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InventoryModal } from '@/components/inventory/inventory-modal';
 import { AddProductModal } from '@/components/inventory/add-product-modal';
@@ -13,7 +13,7 @@ export function AppHeader() {
   const [isAddProductOpen, setAddProductOpen] = useState(false);
   const [isSuggesterOpen, setSuggesterOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
-  const { resetCurrentSale } = useAppContext();
+  const { completeAndResetSale, saleItems } = useAppContext();
 
   return (
     <>
@@ -30,9 +30,14 @@ export function AppHeader() {
               <BarChart3 className="mr-2 h-4 w-4" />
               Ver Reporte
             </Button>
-            <Button variant="ghost" size="sm" onClick={resetCurrentSale}>
-                <RotateCw className="mr-2 h-4 w-4" />
-                Nueva Venta
+            <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={completeAndResetSale}
+                disabled={saleItems.length === 0}
+            >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Completar y Nueva Venta
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setInventoryOpen(true)}>
               <Boxes className="mr-2 h-4 w-4" />
@@ -42,7 +47,7 @@ export function AppHeader() {
               <PlusCircle className="mr-2 h-4 w-4" />
               Agregar Producto
             </Button>
-             <Button variant="secondary" size="sm" onClick={() => setSuggesterOpen(true)}>
+             <Button variant="ghost" size="sm" onClick={() => setSuggesterOpen(true)}>
               <Lightbulb className="mr-2 h-4 w-4" />
               Sugerir Productos
             </Button>

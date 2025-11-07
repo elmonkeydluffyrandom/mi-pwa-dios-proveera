@@ -27,10 +27,9 @@ interface AppContextType {
   removeItemFromSale: (productId: string) => void;
   updateSaleItemQuantity: (productId: string, quantity: number) => void;
   clearSale: () => void;
-  completeSale: () => Promise<void>;
+  completeAndResetSale: () => Promise<void>;
   completedSales: CompletedSale[];
   isInitialized: boolean;
-  resetCurrentSale: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -99,11 +98,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useFirestoreSubscription<CompletedSale>(firestore, 'completedSales', handleSalesUpdate, 'date', 'desc');
 
   useEffect(() => {
-    // We are initialized if firestore is available and we have loaded the inventory at least once.
     if (firestore && !isInitialized) {
-        // The first inventory load will set isInitialized to true
     } else if (!firestore && isInitialized) {
-        // If firestore goes away, we are no longer initialized
         setIsInitialized(false);
     }
   }, [firestore, isInitialized]);
@@ -218,8 +214,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSaleItems([]);
   }, []);
 
-  const completeSale = useCallback(async () => {
-    if (saleItems.length === 0 || !firestore) return;
+  const completeAndResetSale = useCallback(async () => {
+    if (saleItems.length === 0 || !firestore) {
+        if (saleItems.length === 0) {
+             toast({
+                variant: "destructive",
+                title: "Venta vacía",
+                description: "No hay productos en la venta actual para completar.",
+            });
+        }
+        return;
+    };
     
     const newSale = {
         date: serverTimestamp(),
@@ -229,6 +234,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     try {
         await addDoc(collection(firestore, 'completedSales'), newSale);
+        toast({
+            title: "Venta completada",
+            description: `La venta por un total de $${newSale.total.toFixed(2)} ha sido registrada.`,
+        });
         clearSale(); 
     } catch (error) {
         console.error("Error adding sale to Firestore: ", error);
@@ -241,27 +250,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   }, [saleItems, clearSale, firestore, toast]);
 
-  const resetCurrentSale = useCallback(() => {
-    clearSale();
-    toast({
-      title: "Nueva Venta",
-      description: "El registro de venta ha sido limpiado."
-    })
-  }, [clearSale, toast]);
-
 
   const value = {
     inventory,
     addProduct,
     updateProduct,
     deleteProduct,
-    resetCurrentSale,
     saleItems,
     addItemToSale,
     removeItemFromSale,
     updateSaleItemQuantity,
     clearSale,
-    completeSale,
+    completeAndResetSale,
     completedSales,
     isInitialized: firestore ? isInitialized : false,
   };
