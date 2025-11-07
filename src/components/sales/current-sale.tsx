@@ -11,14 +11,14 @@ import { Input } from '../ui/input';
 
 
 export function CurrentSale() {
-  const { saleItems, removeItemFromSale, completeAndResetSale } = useAppContext();
+  const { saleItems, removeItemFromSale, completeAndResetSale, clearSale } = useAppContext();
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
-  const [cashReceived, setCashReceived] = useState<number | string>(0);
+  const [cashReceived, setCashReceived] = useState<number | string>('');
   
   const total = useMemo(() => saleItems.reduce((sum, item) => sum + item.subtotal, 0), [saleItems]);
   const change = useMemo(() => {
     const received = typeof cashReceived === 'string' ? parseFloat(cashReceived) : cashReceived;
-    if (isNaN(received) || received <= 0) return 0;
+    if (isNaN(received) || received <= 0 || received < total) return 0;
     return received - total;
   }, [cashReceived, total]);
 
@@ -32,7 +32,7 @@ export function CurrentSale() {
       }
     } else {
         // When sale is cleared/completed, reset cash received
-        setCashReceived(0);
+        setCashReceived('');
     }
   }, [saleItems, lastAddedId]);
 
@@ -46,13 +46,12 @@ export function CurrentSale() {
         <CardTitle>Venta Actual</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col p-0">
-        <ScrollArea className="h-[calc(100vh-250px)]">
+        <ScrollArea className="flex-grow" style={{height: 'calc(100vh - 500px)'}}>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
                 <TableHead className="text-center">Cant.</TableHead>
-                <TableHead>Precio Unit.</TableHead>
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -61,10 +60,12 @@ export function CurrentSale() {
               {saleItems.length > 0 ? (
                 saleItems.map(item => (
                   <TableRow key={item.productId} className={item.productId === lastAddedId ? 'animate-flash' : ''}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{item.name}</div>
+                      <div className="text-xs text-muted-foreground">${item.price.toFixed(2)} c/u</div>
+                    </TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
-                    <TableCell>${item.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-semibold">${item.subtotal.toFixed(2)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeItemFromSale(item.productId)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -74,7 +75,7 @@ export function CurrentSale() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                     No hay productos en la venta.
                   </TableCell>
                 </TableRow>
@@ -89,8 +90,8 @@ export function CurrentSale() {
             <span>Total:</span>
             <span>${total.toFixed(2)}</span>
           </div>
-          <div className="flex items-end gap-4">
-              <div className="flex-1 space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div className="space-y-1">
                 <label htmlFor='cash-received' className='text-sm font-medium'>Efectivo Recibido</label>
                 <Input
                     id='cash-received'
@@ -101,7 +102,7 @@ export function CurrentSale() {
                     placeholder='0.00'
                 />
               </div>
-              <div className="flex-1 text-right space-y-1">
+              <div className="text-left sm:text-right space-y-1">
                 <p className='text-sm font-medium'>Cambio:</p>
                 <p className='text-xl font-bold'>${change > 0 ? change.toFixed(2) : '0.00'}</p>
               </div>

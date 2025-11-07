@@ -60,7 +60,7 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl w-[95vw] md:w-full">
         <DialogHeader>
           <DialogTitle>Inventario de Productos</DialogTitle>
           <DialogDescription>
@@ -81,7 +81,7 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
             <TableHeader className='sticky top-0 bg-card z-10'>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Categoría</TableHead>
+                <TableHead className='hidden md:table-cell'>Categoría</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="w-16 text-center">Acciones</TableHead>
               </TableRow>
@@ -100,7 +100,7 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
                     {products.map(product => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.category}</TableCell>
+                        <TableCell className='hidden md:table-cell'>{product.category}</TableCell>
                         <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
                         <TableCell className="text-center">
                             <DropdownMenu>
