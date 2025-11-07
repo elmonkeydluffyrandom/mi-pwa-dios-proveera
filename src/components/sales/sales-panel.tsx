@@ -26,10 +26,7 @@ export function SalesPanel() {
   useEffect(() => {
     // When the sale is cleared, reset the local state of this panel
     if (saleItems.length === 0) {
-      setSearchQuery('');
-      setSelectedProduct(null);
-      setQuantity(1);
-      setPopoverOpen(false);
+      resetSearch();
     }
   }, [saleItems]);
 
@@ -61,12 +58,8 @@ export function SalesPanel() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setSelectedProduct(null); 
-    if (query && filteredProducts.length > 0) {
-        setPopoverOpen(true);
-    } else {
-        setPopoverOpen(false);
-    }
+    setSelectedProduct(null);
+    setPopoverOpen(!!query);
   }
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,12 +81,6 @@ export function SalesPanel() {
     setPopoverOpen(false);
   };
 
-
-  // Update popover visibility when filteredProducts changes
-  useEffect(() => {
-    setPopoverOpen(!!searchQuery && filteredProducts.length > 0 && !selectedProduct);
-  }, [searchQuery, filteredProducts, selectedProduct]);
-
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -102,7 +89,7 @@ export function SalesPanel() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover open={isPopoverOpen && filteredProducts.length > 0 && !selectedProduct} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
