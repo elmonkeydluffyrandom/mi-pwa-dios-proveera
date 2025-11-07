@@ -99,9 +99,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useFirestoreSubscription<CompletedSale>(firestore, 'completedSales', handleSalesUpdate, 'date', 'desc');
 
   useEffect(() => {
-    // If firestore becomes available, we are trying to initialize.
-    // If it goes away, we are de-initializing.
-    if (!firestore && isInitialized) {
+    // We are initialized if firestore is available and we have loaded the inventory at least once.
+    if (firestore && !isInitialized) {
+        // The first inventory load will set isInitialized to true
+    } else if (!firestore && isInitialized) {
+        // If firestore goes away, we are no longer initialized
         setIsInitialized(false);
     }
   }, [firestore, isInitialized]);
@@ -260,7 +262,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearSale,
     completeSale,
     completedSales,
-    isInitialized
+    isInitialized: firestore ? isInitialized : false,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
