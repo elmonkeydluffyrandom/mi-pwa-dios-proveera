@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { CATEGORIES } from '@/lib/constants';
+import { CompletedSale } from '@/lib/types';
 
 interface SalesReportModalProps {
   isOpen: boolean;
@@ -21,10 +22,7 @@ type SalesByCategory = {
     }
 }
 
-export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps) {
-  const { completedSales } = useAppContext();
-
-  const reportData = useMemo(() => {
+function processSalesData(completedSales: CompletedSale[]) {
     const data: SalesByCategory = CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: { total: 0, quantity: 0 } }), {});
 
     completedSales.forEach(sale => {
@@ -32,6 +30,11 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
         if (data[item.category]) {
           data[item.category].total += item.subtotal;
           data[item.category].quantity += item.quantity;
+        } else {
+            // Handle uncategorized items if necessary
+            if(!data['Otros']) data['Otros'] = { total: 0, quantity: 0 };
+            data['Otros'].total += item.subtotal;
+            data['Otros'].quantity += item.quantity;
         }
       });
     });
@@ -43,7 +46,13 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
 
 
     return { data, totalSales, sortedCategories };
-  }, [completedSales]);
+}
+
+
+export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps) {
+  const { completedSales } = useAppContext();
+
+  const reportData = useMemo(() => processSalesData(completedSales), [completedSales]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

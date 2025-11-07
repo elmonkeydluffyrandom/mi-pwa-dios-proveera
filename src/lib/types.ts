@@ -16,7 +16,7 @@ export interface SaleItem {
 
 export interface CompletedSale {
   id: string;
-  date: string;
+  date: string; // ISO string format
   items: SaleItem[];
   total: number;
 }
