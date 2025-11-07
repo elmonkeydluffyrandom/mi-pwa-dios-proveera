@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast"
 interface AppContextType {
   inventory: Product[];
   addProduct: (product: Omit<Product, 'id'>) => void;
+  updateProduct: (product: Product) => void;
+  deleteProduct: (productId: string) => void;
   refreshInventory: () => void;
   saleItems: SaleItem[];
   addItemToSale: (product: Product, quantity: number) => void;
@@ -83,6 +85,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newInventory = [...prevInventory, newProduct];
       updateLocalStorage('inventory', newInventory);
       return newInventory;
+    });
+  }, [updateLocalStorage]);
+
+   const updateProduct = useCallback((updatedProduct: Product) => {
+    setInventory(prevInventory => {
+      const newInventory = prevInventory.map(p => p.id === updatedProduct.id ? updatedProduct : p);
+      updateLocalStorage('inventory', newInventory);
+      return newInventory;
+    });
+    // Also update items in current sale if they are there
+    setSaleItems(prevItems => {
+        const newItems = prevItems.map(item =>
+            item.productId === updatedProduct.id
+            ? { ...item, name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category, subtotal: updatedProduct.price * item.quantity }
+            : item
+        );
+        updateLocalStorage('currentSale', newItems);
+        return newItems;
+    });
+  }, [updateLocalStorage]);
+
+  const deleteProduct = useCallback((productId: string) => {
+    setInventory(prevInventory => {
+        const newInventory = prevInventory.filter(p => p.id !== productId);
+        updateLocalStorage('inventory', newInventory);
+        return newInventory;
+    });
+     // Also remove from current sale if it is there
+    setSaleItems(prevItems => {
+        const newItems = prevItems.filter(item => item.productId !== productId);
+        updateLocalStorage('currentSale', newItems);
+        return newItems;
     });
   }, [updateLocalStorage]);
 
@@ -180,6 +214,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = {
     inventory,
     addProduct,
+    updateProduct,
+    deleteProduct,
     refreshInventory,
     saleItems,
     addItemToSale,

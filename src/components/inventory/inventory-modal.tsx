@@ -5,7 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Product } from '@/lib/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { EditProductModal } from './edit-product-modal';
+import { DeleteProductDialog } from './delete-product-dialog';
+
 
 interface InventoryModalProps {
   isOpen: boolean;
@@ -15,21 +21,32 @@ interface InventoryModalProps {
 export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
   const { inventory } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
   const filteredInventory = useMemo(() => {
     return inventory.filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ).sort((a,b) => a.name.localeCompare(b.name));
   }, [inventory, searchTerm]);
 
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+  }
+
+  const handleDelete = (product: Product) => {
+    setDeletingProduct(product);
+  }
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Inventario de Productos</DialogTitle>
           <DialogDescription>
-            Aquí puedes ver todos los productos disponibles en la tienda.
+            Aquí puedes ver, editar y eliminar los productos disponibles en la tienda.
           </DialogDescription>
         </DialogHeader>
         <div className="relative">
@@ -48,6 +65,7 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
+                <TableHead className="w-16 text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -57,11 +75,30 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-center">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => handleEdit(product)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDelete(product)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                  <TableRow>
-                  <TableCell colSpan={3} className="text-center h-24">
+                  <TableCell colSpan={4} className="text-center h-24">
                     No se encontraron productos.
                   </TableCell>
                 </TableRow>
@@ -71,5 +108,18 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
         </ScrollArea>
       </DialogContent>
     </Dialog>
+    
+    <EditProductModal 
+        product={editingProduct} 
+        isOpen={!!editingProduct} 
+        onOpenChange={(open) => !open && setEditingProduct(null)} 
+    />
+    
+    <DeleteProductDialog
+        product={deletingProduct}
+        isOpen={!!deletingProduct}
+        onOpenChange={(open) => !open && setDeletingProduct(null)}
+    />
+    </>
   );
 }
