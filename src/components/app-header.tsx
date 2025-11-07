@@ -26,15 +26,15 @@ export function AppHeader() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-             <Button variant="outline" size="sm" onClick={() => setReportOpen(true)} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
+             <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" />
               Ver Reporte
             </Button>
-            <Button variant="outline" size="sm" onClick={refreshInventory} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
+            <Button variant="ghost" size="sm" onClick={refreshInventory}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refrescar
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setInventoryOpen(true)} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
+            <Button variant="ghost" size="sm" onClick={() => setInventoryOpen(true)}>
               <Boxes className="mr-2 h-4 w-4" />
               Inventario
             </Button>
@@ -42,7 +42,7 @@ export function AppHeader() {
               <PlusCircle className="mr-2 h-4 w-4" />
               Agregar Producto
             </Button>
-             <Button variant="secondary" size="sm" onClick={() => setSuggesterOpen(true)} className="bg-secondary/80 text-secondary-foreground hover:bg-secondary/90">
+             <Button variant="secondary" size="sm" onClick={() => setSuggesterOpen(true)}>
               <Lightbulb className="mr-2 h-4 w-4" />
               Sugerir Productos
             </Button>
