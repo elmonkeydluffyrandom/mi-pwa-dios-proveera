@@ -39,13 +39,12 @@ export function SalesPanel() {
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setSelectedProduct(null);
-    if (e.target.value) {
-        setPopoverOpen(true);
-    } else {
-        setPopoverOpen(false);
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (selectedProduct && selectedProduct.name !== query) {
+        setSelectedProduct(null);
     }
+    setPopoverOpen(!!query);
   }
 
   return (
