@@ -20,7 +20,6 @@ export function SalesPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | string>(1);
-  const [isPopoverOpen, setPopoverOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -31,26 +30,23 @@ export function SalesPanel() {
   }, [saleItems]);
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return [];
+    if (!searchQuery || selectedProduct) return [];
     
     const normalizedQuery = normalizeString(searchQuery);
     
     return inventory.filter(product =>
       normalizeString(product.name).startsWith(normalizedQuery)
     ).slice(0, 10);
-  }, [searchQuery, inventory]);
+  }, [searchQuery, inventory, selectedProduct]);
 
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
     setSearchQuery(product.name);
-    setPopoverOpen(false);
-    inputRef.current?.blur();
   };
 
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
-      // Reset after adding
       resetSearch();
     }
   };
@@ -58,8 +54,9 @@ export function SalesPanel() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setSelectedProduct(null);
-    setPopoverOpen(!!query);
+    if(selectedProduct) {
+        setSelectedProduct(null);
+    }
   }
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +75,9 @@ export function SalesPanel() {
     setSearchQuery('');
     setSelectedProduct(null);
     setQuantity(1);
-    setPopoverOpen(false);
+    if (inputRef.current) {
+        inputRef.current.blur();
+    }
   };
 
   return (
@@ -89,7 +88,7 @@ export function SalesPanel() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover open={isPopoverOpen && filteredProducts.length > 0 && !selectedProduct} onOpenChange={setPopoverOpen}>
+            <Popover open={!!searchQuery && filteredProducts.length > 0}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -99,9 +98,7 @@ export function SalesPanel() {
                             placeholder="Escribe el nombre del producto..."
                             value={searchQuery}
                             onChange={handleSearchChange}
-                            onBlur={() => setTimeout(() => setPopoverOpen(false), 150)} // Delay to allow click on popover
-                            onFocus={() => setPopoverOpen(!!searchQuery && filteredProducts.length > 0 && !selectedProduct)}
-                            className="pl-10 pr-10" // Add pr-10 for the clear button
+                            className="pl-10 pr-10"
                             autoComplete="off"
                         />
                         {searchQuery && (
@@ -125,7 +122,7 @@ export function SalesPanel() {
                             key={product.id}
                             variant="ghost"
                             className="justify-start"
-                            onClick={() => handleSelectProduct(product)}
+                            onMouseDown={() => handleSelectProduct(product)}
                         >
                             {product.name} - ${product.price.toFixed(2)}
                         </Button>
