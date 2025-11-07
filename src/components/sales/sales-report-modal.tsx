@@ -21,6 +21,7 @@ interface SalesReportModalProps {
 
 type AggregatedItem = {
     name: string;
+    price: number;
     quantity: number;
     subtotal: number;
 }
@@ -52,6 +53,7 @@ function processSalesData(completedSales: CompletedSale[]) {
         } else {
             data[category].items[item.productId] = {
                 name: item.name,
+                price: item.price,
                 quantity: item.quantity,
                 subtotal: item.subtotal
             };
@@ -92,20 +94,22 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
     const tableData = reportData.sortedCategories.flatMap(categoryData => {
         const categoryRow = [
             { content: categoryData.category, styles: { fontStyle: 'bold' } },
+            { content: '', styles: { halign: 'right' } }, // Empty cell for price
             { content: categoryData.quantity, styles: { halign: 'right', fontStyle: 'bold' } },
             { content: `$${categoryData.total.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } },
         ];
         const itemRows = categoryData.items.map(item => [
             `  - ${item.name}`,
+            `$${item.price.toFixed(2)}`,
             item.quantity,
             `$${item.subtotal.toFixed(2)}`
         ]);
-        return [categoryRow, ...itemRows, [{ content: '', colSpan: 3 }]]; // Add a spacer row
+        return [categoryRow, ...itemRows, [{ content: '', colSpan: 4 }]]; // Add a spacer row
     });
 
     autoTable(doc, {
         startY: 50,
-        head: [['Categoría / Producto', 'Artículos Vendidos', 'Total de Ventas']],
+        head: [['Categoría / Producto', 'Precio Unit.', 'Artículos Vendidos', 'Total de Ventas']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [36, 56, 99] }, // Primary color
@@ -123,7 +127,7 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Reporte de Ventas</DialogTitle>
           <DialogDescription>
@@ -158,6 +162,7 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
                         <TableHeader>
                           <TableRow>
                             <TableHead className='pl-8'>Producto</TableHead>
+                            <TableHead className="text-right">Precio Unit.</TableHead>
                             <TableHead className="text-right">Cantidad</TableHead>
                             <TableHead className="text-right">Subtotal</TableHead>
                           </TableRow>
@@ -166,6 +171,7 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
                           {items.map(item => (
                             <TableRow key={item.name}>
                               <TableCell className="pl-8">{item.name}</TableCell>
+                              <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
                               <TableCell className="text-right">{item.quantity}</TableCell>
                               <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
                             </TableRow>
