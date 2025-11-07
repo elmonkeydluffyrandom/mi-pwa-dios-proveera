@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useImperativeHandle, forwardRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, Minus } from 'lucide-react';
 import { useAppContext } from '@/contexts/app-context';
 import type { Product } from '@/lib/types';
@@ -9,24 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-export interface SalesPanelRef {
-  reset: () => void;
-}
-
-export const SalesPanel = forwardRef<SalesPanelRef, {}>((props, ref) => {
-  const { inventory, addItemToSale } = useAppContext();
+export function SalesPanel() {
+  const { inventory, addItemToSale, saleItems } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | string>(1);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
 
-  useImperativeHandle(ref, () => ({
-    reset() {
+  useEffect(() => {
+    // If saleItems is empty, it means a sale was just completed or cleared.
+    // We reset the state of this component.
+    if (saleItems.length === 0) {
       setSelectedProduct(null);
       setSearchQuery('');
       setQuantity(1);
     }
-  }));
+  }, [saleItems]);
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
@@ -87,7 +85,7 @@ export const SalesPanel = forwardRef<SalesPanelRef, {}>((props, ref) => {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover open={isPopoverOpen && searchQuery.length > 0} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -97,9 +95,6 @@ export const SalesPanel = forwardRef<SalesPanelRef, {}>((props, ref) => {
                             value={searchQuery}
                             onChange={handleSearchChange}
                             onFocus={() => { if (searchQuery) setPopoverOpen(true); }}
-                            onBlur={() => {
-                                setTimeout(() => setPopoverOpen(false), 150);
-                            }}
                             className="pl-10"
                             autoComplete="off"
                         />
@@ -161,6 +156,4 @@ export const SalesPanel = forwardRef<SalesPanelRef, {}>((props, ref) => {
       </CardContent>
     </Card>
   );
-});
-
-SalesPanel.displayName = 'SalesPanel';
+}
