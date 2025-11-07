@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RotateCw, BarChart3, CheckCircle } from 'lucide-react';
+import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RotateCw, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InventoryModal } from '@/components/inventory/inventory-modal';
 import { AddProductModal } from '@/components/inventory/add-product-modal';
@@ -13,6 +13,7 @@ export function AppHeader() {
   const [isAddProductOpen, setAddProductOpen] = useState(false);
   const [isSuggesterOpen, setSuggesterOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
+  const { clearSale } = useAppContext();
 
   return (
     <>
@@ -25,7 +26,11 @@ export function AppHeader() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-             <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
+            <Button variant="ghost" size="sm" onClick={() => clearSale()}>
+                <RotateCw className="mr-2 h-4 w-4" />
+                Nueva Venta
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" />
               Ver Reporte
             </Button>

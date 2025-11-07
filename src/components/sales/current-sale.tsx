@@ -18,7 +18,8 @@ export function CurrentSale() {
   const total = useMemo(() => saleItems.reduce((sum, item) => sum + item.subtotal, 0), [saleItems]);
   const change = useMemo(() => {
     const received = typeof cashReceived === 'string' ? parseFloat(cashReceived) : cashReceived;
-    return received > 0 ? received - total : 0;
+    if (isNaN(received) || received <= 0) return 0;
+    return received - total;
   }, [cashReceived, total]);
 
   useEffect(() => {
@@ -29,14 +30,11 @@ export function CurrentSale() {
         const timer = setTimeout(() => setLastAddedId(null), 1000);
         return () => clearTimeout(timer);
       }
+    } else {
+        // When sale is cleared/completed, reset cash received
+        setCashReceived(0);
     }
   }, [saleItems, lastAddedId]);
-
-  useEffect(() => {
-    if (saleItems.length === 0) {
-      setCashReceived(0);
-    }
-  }, [saleItems]);
 
   const handleCompleteSale = async () => {
     await completeAndResetSale();
@@ -105,7 +103,7 @@ export function CurrentSale() {
               </div>
               <div className="flex-1 text-right space-y-1">
                 <p className='text-sm font-medium'>Cambio:</p>
-                <p className='text-xl font-bold'>${change.toFixed(2)}</p>
+                <p className='text-xl font-bold'>${change > 0 ? change.toFixed(2) : '0.00'}</p>
               </div>
           </div>
           <Button

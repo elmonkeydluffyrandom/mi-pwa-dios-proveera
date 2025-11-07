@@ -20,8 +20,8 @@ export function SalesPanel() {
     // This effect ensures that if the sale is completed (saleItems goes to 0),
     // the SalesPanel resets its internal state to be ready for the next sale.
     if (saleItems.length === 0) {
-      setSelectedProduct(null);
       setSearchQuery('');
+      setSelectedProduct(null);
       setQuantity(1);
     }
   }, [saleItems]);
@@ -42,8 +42,6 @@ export function SalesPanel() {
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
-      // After adding, reset the search fields for the next item in the *same* sale.
-      // The useEffect hook will now handle resetting the state for a *new* sale.
       setSearchQuery('');
       setSelectedProduct(null);
       setQuantity(1);
