@@ -9,6 +9,7 @@ import { AppProvider } from '@/contexts/app-context';
 export const metadata: Metadata = {
   title: 'Tienda "Dios Proveerá"',
   description: 'Aplicación de punto de venta offline para pequeñas tiendas.',
+  viewport: 'width=device-width, initial-scale=1', 
 };
 
 export default function RootLayout({
