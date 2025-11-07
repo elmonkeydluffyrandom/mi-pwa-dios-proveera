@@ -1,12 +1,19 @@
 'use client';
+import { useRef } from 'react';
 import { AppHeader } from "@/components/app-header";
 import { CurrentSale } from "@/components/sales/current-sale";
-import { SalesPanel } from "@/components/sales/sales-panel";
+import { SalesPanel, type SalesPanelRef } from "@/components/sales/sales-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/app-context";
 
 export function PageClient() {
-    const { isInitialized } = useAppContext();
+    const { isInitialized, clearSale } = useAppContext();
+    const salesPanelRef = useRef<SalesPanelRef>(null);
+
+    const handleClearSale = () => {
+        clearSale();
+        salesPanelRef.current?.reset();
+    };
 
     if (!isInitialized) {
         return <LoadingSkeleton />;
@@ -19,10 +26,10 @@ export function PageClient() {
                 <div className="container mx-auto max-w-7xl">
                     <div className="grid gap-6 md:grid-cols-5">
                         <div className="md:col-span-3">
-                            <SalesPanel />
+                            <SalesPanel ref={salesPanelRef} />
                         </div>
                         <div className="md:col-span-2">
-                           <CurrentSale />
+                           <CurrentSale onCompleteSale={handleClearSale} />
                         </div>
                     </div>
                 </div>

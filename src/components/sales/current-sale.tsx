@@ -10,7 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 
-export function CurrentSale() {
+interface CurrentSaleProps {
+  onCompleteSale: () => void;
+}
+
+export function CurrentSale({ onCompleteSale }: CurrentSaleProps) {
   const { saleItems, removeItemFromSale, completeSale } = useAppContext();
   const { toast } = useToast();
   const [cashReceived, setCashReceived] = useState(0);
@@ -33,13 +37,16 @@ export function CurrentSale() {
     }
   }, [saleItems, lastAddedId]);
 
-  const handleCompleteSale = () => {
-    completeSale();
+  const handleCompleteSale = async () => {
+    await completeSale();
     toast({
         title: "Venta completada",
         description: `La venta por un total de $${total.toFixed(2)} ha sido registrada.`,
     });
     setCashReceived(0);
+    if (onCompleteSale) {
+      onCompleteSale();
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { Search, Plus, Minus } from 'lucide-react';
 import { useAppContext } from '@/contexts/app-context';
 import type { Product } from '@/lib/types';
@@ -9,12 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-export function SalesPanel() {
+export interface SalesPanelRef {
+  reset: () => void;
+}
+
+export const SalesPanel = forwardRef<SalesPanelRef, {}>((props, ref) => {
   const { inventory, addItemToSale } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | string>(1);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    reset() {
+      setSelectedProduct(null);
+      setSearchQuery('');
+      setQuantity(1);
+    }
+  }));
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
@@ -43,6 +55,12 @@ export function SalesPanel() {
     setSearchQuery(query);
     if (query) {
       setPopoverOpen(true);
+      const exactMatch = inventory.find(p => p.name.toLowerCase() === query.toLowerCase());
+      if (exactMatch) {
+        setSelectedProduct(exactMatch);
+      } else {
+        setSelectedProduct(null);
+      }
     } else {
       setPopoverOpen(false);
       setSelectedProduct(null);
@@ -78,12 +96,9 @@ export function SalesPanel() {
                             placeholder="Escribe el nombre del producto..."
                             value={searchQuery}
                             onChange={handleSearchChange}
+                            onFocus={() => { if (searchQuery) setPopoverOpen(true); }}
                             onBlur={() => {
-                                // If the search query does not match the selected product, clear it.
-                                if (selectedProduct && searchQuery !== selectedProduct.name) {
-                                    setSelectedProduct(null);
-                                    setSearchQuery('');
-                                }
+                                setTimeout(() => setPopoverOpen(false), 150);
                             }}
                             className="pl-10"
                             autoComplete="off"
@@ -123,7 +138,7 @@ export function SalesPanel() {
                             <Minus className="h-4 w-4" />
                         </Button>
                         <Input 
-                            type="number" 
+                            type="text" 
                             className="w-16 h-8 text-center" 
                             value={quantity}
                             onChange={handleQuantityChange}
@@ -146,4 +161,6 @@ export function SalesPanel() {
       </CardContent>
     </Card>
   );
-}
+});
+
+SalesPanel.displayName = 'SalesPanel';
