@@ -14,7 +14,7 @@ export function SalesPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [isPopoverOpen, setPopoverOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
@@ -55,7 +55,7 @@ export function SalesPanel() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
