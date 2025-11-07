@@ -11,7 +11,7 @@ let auth: Auth | undefined;
 let firestore: Firestore | undefined;
 
 export function FirebaseClientProvider({ children }: { children: ReactNode }) {
-  const { app, auth, firestore } = useMemo(() => {
+  const { app, auth: _auth, firestore: _firestore } = useMemo(() => {
     if (!firebaseApp) {
       firebaseApp = initializeApp(firebaseConfig);
       auth = getAuth(firebaseApp);
@@ -21,7 +21,7 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <FirebaseProvider app={app} auth={auth} firestore={firestore}>
+    <FirebaseProvider app={app} auth={_auth} firestore={_firestore}>
       {children}
     </FirebaseProvider>
   );
