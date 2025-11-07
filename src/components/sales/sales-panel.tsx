@@ -42,6 +42,8 @@ export function SalesPanel() {
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
     setSearchQuery(product.name);
+    // Move focus back to the quantity logic or add button if desired
+    // For now, it just closes the popover by setting selectedProduct
   };
 
   const handleAddToSale = () => {
@@ -76,9 +78,12 @@ export function SalesPanel() {
     setSelectedProduct(null);
     setQuantity(1);
     if (inputRef.current) {
+        inputRef.current.focus();
         inputRef.current.blur();
     }
   };
+
+  const isPopoverOpen = searchQuery.length > 0 && filteredProducts.length > 0 && !selectedProduct;
 
   return (
     <Card className="shadow-lg">
@@ -88,7 +93,7 @@ export function SalesPanel() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover open={!!searchQuery && filteredProducts.length > 0}>
+            <Popover open={isPopoverOpen}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -115,16 +120,26 @@ export function SalesPanel() {
                         )}
                     </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <PopoverContent 
+                    className="w-[--radix-popover-trigger-width] p-0" 
+                    align="start"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                     <div className="flex flex-col">
                         {filteredProducts.map(product => (
                         <Button
                             key={product.id}
                             variant="ghost"
-                            className="justify-start"
-                            onMouseDown={() => handleSelectProduct(product)}
+                            className="justify-start h-auto py-2"
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectProduct(product);
+                            }}
                         >
-                            {product.name} - ${product.price.toFixed(2)}
+                            <div className='flex flex-col items-start'>
+                                <div>{product.name}</div>
+                                <div className='text-xs text-muted-foreground'>${product.price.toFixed(2)} - {product.category}</div>
+                            </div>
                         </Button>
                         ))}
                     </div>
