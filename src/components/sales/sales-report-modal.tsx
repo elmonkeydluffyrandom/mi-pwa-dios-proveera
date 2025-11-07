@@ -93,10 +93,7 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
 
     const tableData = reportData.sortedCategories.flatMap(categoryData => {
         const categoryRow = [
-            { content: categoryData.category, styles: { fontStyle: 'bold' } },
-            { content: '', styles: { halign: 'right' } }, // Empty cell for price
-            { content: categoryData.quantity, styles: { halign: 'right', fontStyle: 'bold' } },
-            { content: `$${categoryData.total.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } },
+            { content: categoryData.category, colSpan: 4, styles: { fontStyle: 'bold' } }
         ];
         const itemRows = categoryData.items.map(item => [
             `  - ${item.name}`,
@@ -104,7 +101,7 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
             item.quantity,
             `$${item.subtotal.toFixed(2)}`
         ]);
-        return [categoryRow, ...itemRows, [{ content: '', colSpan: 4 }]]; // Add a spacer row
+        return [categoryRow, ...itemRows];
     });
 
     autoTable(doc, {
