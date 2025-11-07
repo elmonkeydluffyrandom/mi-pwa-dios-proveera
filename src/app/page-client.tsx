@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/contexts/app-context";
 
 export function PageClient() {
-    const { isInitialized, clearSale } = useAppContext();
+    const { isInitialized } = useAppContext();
 
     if (!isInitialized) {
         return <LoadingSkeleton />;
@@ -22,7 +22,7 @@ export function PageClient() {
                             <SalesPanel />
                         </div>
                         <div className="md:col-span-2">
-                           <CurrentSale onCompleteSale={clearSale} />
+                           <CurrentSale />
                         </div>
                     </div>
                 </div>

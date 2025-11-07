@@ -10,11 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 
-interface CurrentSaleProps {
-  onCompleteSale: () => void;
-}
 
-export function CurrentSale({ onCompleteSale }: CurrentSaleProps) {
+export function CurrentSale() {
   const { saleItems, removeItemFromSale, completeSale } = useAppContext();
   const { toast } = useToast();
   const [cashReceived, setCashReceived] = useState(0);
@@ -44,9 +41,6 @@ export function CurrentSale({ onCompleteSale }: CurrentSaleProps) {
         description: `La venta por un total de $${total.toFixed(2)} ha sido registrada.`,
     });
     setCashReceived(0);
-    if (onCompleteSale) {
-      onCompleteSale();
-    }
   }
 
   return (
@@ -60,7 +54,7 @@ export function CurrentSale({ onCompleteSale }: CurrentSaleProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead className="text-right">Precio Unit.</TableHead>
+                <TableHead>Precio Unit.</TableHead>
                 <TableHead className="text-center">Cant.</TableHead>
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -71,7 +65,7 @@ export function CurrentSale({ onCompleteSale }: CurrentSaleProps) {
                 saleItems.map(item => (
                   <TableRow key={item.productId} className={item.productId === lastAddedId ? 'animate-flash' : ''}>
                     <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                    <TableCell>${item.price.toFixed(2)}</TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
                     <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
                     <TableCell>
