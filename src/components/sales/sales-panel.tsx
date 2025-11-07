@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { Search, Plus, Minus } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Search, Plus, Minus, X } from 'lucide-react';
 import { useAppContext } from '@/contexts/app-context';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 // Helper function to remove accents
 const normalizeString = (str: string) => {
+    if (!str) return '';
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
@@ -20,6 +21,7 @@ export function SalesPanel() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | string>(1);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // When the sale is cleared, reset the local state of this panel
@@ -45,23 +47,26 @@ export function SalesPanel() {
     setSelectedProduct(product);
     setSearchQuery(product.name);
     setPopoverOpen(false);
+    inputRef.current?.blur();
   };
 
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
       // Reset after adding
-      setSearchQuery('');
-      setSelectedProduct(null);
-      setQuantity(1);
+      resetSearch();
     }
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setSelectedProduct(null); // Deselect product if search query changes
-    setPopoverOpen(!!query && filteredProducts.length > 0);
+    setSelectedProduct(null); 
+    if (query && filteredProducts.length > 0) {
+        setPopoverOpen(true);
+    } else {
+        setPopoverOpen(false);
+    }
   }
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,6 +80,14 @@ export function SalesPanel() {
         }
     }
   }
+
+  const resetSearch = () => {
+    setSearchQuery('');
+    setSelectedProduct(null);
+    setQuantity(1);
+    setPopoverOpen(false);
+  };
+
 
   // Update popover visibility when filteredProducts changes
   useEffect(() => {
@@ -95,14 +108,27 @@ export function SalesPanel() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             id="product-search"
+                            ref={inputRef}
                             placeholder="Escribe el nombre del producto..."
                             value={searchQuery}
                             onChange={handleSearchChange}
                             onBlur={() => setTimeout(() => setPopoverOpen(false), 150)} // Delay to allow click on popover
                             onFocus={() => setPopoverOpen(!!searchQuery && filteredProducts.length > 0 && !selectedProduct)}
-                            className="pl-10"
+                            className="pl-10 pr-10" // Add pr-10 for the clear button
                             autoComplete="off"
                         />
+                        {searchQuery && (
+                            <Button 
+                                type="button"
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={resetSearch}
+                            >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Limpiar búsqueda</span>
+                            </Button>
+                        )}
                     </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
