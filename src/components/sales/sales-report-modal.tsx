@@ -37,8 +37,12 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
     });
 
     const totalSales = Object.values(data).reduce((sum, cat) => sum + cat.total, 0);
+    const sortedCategories = Object.entries(data)
+                                    .filter(([, {total}]) => total > 0)
+                                    .sort(([, a], [, b]) => b.total - a.total);
 
-    return { data, totalSales };
+
+    return { data, totalSales, sortedCategories };
   }, [completedSales]);
 
   return (
@@ -70,16 +74,14 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {Object.entries(reportData.data).map(([category, { total, quantity }]) => (
-                    total > 0 && (
-                        <TableRow key={category}>
-                        <TableCell className="font-medium">
-                            <Badge variant="secondary">{category}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{quantity}</TableCell>
-                        <TableCell className="text-right">${total.toFixed(2)}</TableCell>
-                        </TableRow>
-                    )
+                {reportData.sortedCategories.map(([category, { total, quantity }]) => (
+                    <TableRow key={category}>
+                    <TableCell className="font-medium">
+                        <Badge variant="secondary">{category}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{quantity}</TableCell>
+                    <TableCell className="text-right">${total.toFixed(2)}</TableCell>
+                    </TableRow>
                 ))}
                 </TableBody>
             </Table>
