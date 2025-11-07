@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { Product, SaleItem, CompletedSale } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast"
-import { useFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { 
   collection, 
   onSnapshot, 
@@ -36,7 +36,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast()
-  const { firestore } = useFirebase();
+  const firestore = useFirestore();
   const [inventory, setInventory] = useState<Product[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [completedSales, setCompletedSales] = useState<CompletedSale[]>([]);
@@ -44,7 +44,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Effect to load and sync inventory from Firestore
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore) {
+      // Still waiting for firestore to be initialized
+      return;
+    };
     
     setIsInitialized(false);
     const inventoryRef = collection(firestore, 'inventory');
