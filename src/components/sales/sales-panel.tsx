@@ -13,7 +13,7 @@ export function SalesPanel() {
   const { inventory, addItemToSale } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | string>(1);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
@@ -30,8 +30,8 @@ export function SalesPanel() {
   };
 
   const handleAddToSale = () => {
-    if (selectedProduct && quantity > 0) {
-      addItemToSale(selectedProduct, quantity);
+    if (selectedProduct && Number(quantity) > 0) {
+      addItemToSale(selectedProduct, Number(quantity));
       setSelectedProduct(null);
       setSearchQuery('');
       setQuantity(1);
@@ -41,10 +41,24 @@ export function SalesPanel() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (selectedProduct && selectedProduct.name !== query) {
-        setSelectedProduct(null);
+    if (query) {
+      setPopoverOpen(true);
+    } else {
+      setPopoverOpen(false);
+      setSelectedProduct(null);
     }
-    setPopoverOpen(!!query);
+  }
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+        setQuantity('');
+    } else {
+        const numValue = parseInt(value);
+        if (!isNaN(numValue) && numValue > 0) {
+            setQuantity(numValue);
+        }
+    }
   }
 
   return (
@@ -64,6 +78,13 @@ export function SalesPanel() {
                             placeholder="Escribe el nombre del producto..."
                             value={searchQuery}
                             onChange={handleSearchChange}
+                            onBlur={() => {
+                                // If the search query does not match the selected product, clear it.
+                                if (selectedProduct && searchQuery !== selectedProduct.name) {
+                                    setSelectedProduct(null);
+                                    setSearchQuery('');
+                                }
+                            }}
                             className="pl-10"
                             autoComplete="off"
                         />
@@ -98,21 +119,26 @@ export function SalesPanel() {
                         <p className="text-sm text-muted-foreground">${selectedProduct.price.toFixed(2)} / unidad</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, Number(q) - 1))}>
                             <Minus className="h-4 w-4" />
                         </Button>
                         <Input 
                             type="number" 
                             className="w-16 h-8 text-center" 
                             value={quantity}
-                            onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                            onChange={handleQuantityChange}
+                            onBlur={() => {
+                                if (quantity === '' || Number(quantity) < 1) {
+                                    setQuantity(1);
+                                }
+                            }}
                         />
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => q + 1)}>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Number(q) + 1)}>
                             <Plus className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
-                 <Button onClick={handleAddToSale} className="w-full">
+                 <Button onClick={handleAddToSale} className="w-full" disabled={!quantity || Number(quantity) < 1}>
                     <Plus className="mr-2 h-4 w-4" /> Agregar a la Venta
                 </Button>
             </div>
