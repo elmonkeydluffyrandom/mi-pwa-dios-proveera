@@ -14,14 +14,14 @@ export function SalesPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number | string>(1);
+  const [isPopoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
-    // This effect ensures that if the sale is completed (saleItems goes to 0),
-    // the SalesPanel resets its internal state to be ready for the next sale.
     if (saleItems.length === 0) {
       setSearchQuery('');
       setSelectedProduct(null);
       setQuantity(1);
+      setPopoverOpen(false);
     }
   }, [saleItems]);
 
@@ -35,6 +35,7 @@ export function SalesPanel() {
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
     setSearchQuery(product.name);
+    setPopoverOpen(false);
   };
 
   const handleAddToSale = () => {
@@ -49,11 +50,11 @@ export function SalesPanel() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    const exactMatch = inventory.find(p => p.name.toLowerCase() === query.toLowerCase());
-    if (exactMatch) {
-        setSelectedProduct(exactMatch);
+    setSelectedProduct(null);
+    if (query && filteredProducts.length > 0) {
+      setPopoverOpen(true);
     } else {
-        setSelectedProduct(null);
+      setPopoverOpen(false);
     }
   }
 
@@ -77,7 +78,7 @@ export function SalesPanel() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="product-search" className="text-sm font-medium">Buscar Producto</label>
-            <Popover>
+            <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -91,7 +92,7 @@ export function SalesPanel() {
                         />
                     </div>
                 </PopoverTrigger>
-                {searchQuery && filteredProducts.length > 0 && (
+                {filteredProducts.length > 0 && (
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                     <div className="flex flex-col">
                         {filteredProducts.map(product => (
@@ -101,7 +102,7 @@ export function SalesPanel() {
                             className="justify-start"
                             onClick={() => handleSelectProduct(product)}
                         >
-                            {product.name} - ${product.price}
+                            {product.name} - ${product.price.toFixed(2)}
                         </Button>
                         ))}
                     </div>
