@@ -9,6 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
+// Helper function to remove accents
+const normalizeString = (str: string) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 export function SalesPanel() {
   const { inventory, addItemToSale, saleItems } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +22,7 @@ export function SalesPanel() {
   const [isPopoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
+    // When the sale is cleared, reset the local state of this panel
     if (saleItems.length === 0) {
       setSearchQuery('');
       setSelectedProduct(null);
@@ -27,8 +33,11 @@ export function SalesPanel() {
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
+    
+    const normalizedQuery = normalizeString(searchQuery);
+    
     return inventory.filter(product =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      normalizeString(product.name).startsWith(normalizedQuery)
     ).slice(0, 10);
   }, [searchQuery, inventory]);
 
@@ -41,6 +50,7 @@ export function SalesPanel() {
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
+      // Reset after adding
       setSearchQuery('');
       setSelectedProduct(null);
       setQuantity(1);
@@ -50,12 +60,8 @@ export function SalesPanel() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setSelectedProduct(null);
-    if (query && filteredProducts.length > 0) {
-      setPopoverOpen(true);
-    } else {
-      setPopoverOpen(false);
-    }
+    setSelectedProduct(null); // Deselect product if search query changes
+    setPopoverOpen(!!query && filteredProducts.length > 0);
   }
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,6 +75,11 @@ export function SalesPanel() {
         }
     }
   }
+
+  // Update popover visibility when filteredProducts changes
+  useEffect(() => {
+    setPopoverOpen(!!searchQuery && filteredProducts.length > 0 && !selectedProduct);
+  }, [searchQuery, filteredProducts, selectedProduct]);
 
   return (
     <Card className="shadow-lg">
@@ -87,12 +98,13 @@ export function SalesPanel() {
                             placeholder="Escribe el nombre del producto..."
                             value={searchQuery}
                             onChange={handleSearchChange}
+                            onBlur={() => setTimeout(() => setPopoverOpen(false), 150)} // Delay to allow click on popover
+                            onFocus={() => setPopoverOpen(!!searchQuery && filteredProducts.length > 0 && !selectedProduct)}
                             className="pl-10"
                             autoComplete="off"
                         />
                     </div>
                 </PopoverTrigger>
-                {filteredProducts.length > 0 && (
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                     <div className="flex flex-col">
                         {filteredProducts.map(product => (
@@ -107,7 +119,6 @@ export function SalesPanel() {
                         ))}
                     </div>
                 </PopoverContent>
-                )}
             </Popover>
         </div>
         
