@@ -13,7 +13,8 @@ import {
   doc,
   serverTimestamp,
   query,
-  orderBy
+  orderBy,
+  Firestore
 } from 'firebase/firestore';
 
 interface AppContextType {
@@ -29,10 +30,53 @@ interface AppContextType {
   completeSale: () => Promise<void>;
   completedSales: CompletedSale[];
   isInitialized: boolean;
-  refreshInventory: () => void; // Keep for user feedback
+  refreshInventory: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+function useFirestoreSubscription<T>(
+    firestore: Firestore | undefined,
+    collectionName: string,
+    callback: (data: T[]) => void,
+    orderField: string,
+    orderDirection: 'asc' | 'desc' = 'asc'
+) {
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (!firestore) return;
+
+        const collectionRef = collection(firestore, collectionName);
+        const q = query(collectionRef, orderBy(orderField, orderDirection));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => {
+                const docData = doc.data();
+                // Special handling for timestamp fields
+                if (docData.date && typeof docData.date.toDate === 'function') {
+                    return {
+                        id: doc.id,
+                        ...docData,
+                        date: docData.date.toDate().toISOString(),
+                    } as T;
+                }
+                return { id: doc.id, ...docData } as T;
+            });
+            callback(data);
+        }, (error) => {
+            console.error(`Failed to fetch ${collectionName} from Firestore`, error);
+            toast({
+                variant: "destructive",
+                title: "Error de Carga",
+                description: `No se pudo cargar ${collectionName}.`,
+            });
+        });
+
+        return () => unsubscribe();
+    }, [firestore, collectionName, callback, orderField, orderDirection, toast]);
+}
+
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast()
@@ -42,67 +86,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [completedSales, setCompletedSales] = useState<CompletedSale[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Effect to load and sync inventory from Firestore
-  useEffect(() => {
-    if (!firestore) {
-      // Still waiting for firestore to be initialized
-      return;
-    };
-    
-    setIsInitialized(false);
-    const inventoryRef = collection(firestore, 'inventory');
-    const q = query(inventoryRef, orderBy('name'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const inventoryData: Product[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Product));
-      setInventory(inventoryData);
-      setIsInitialized(true);
-    }, (error) => {
-      console.error("Failed to fetch inventory from Firestore", error);
-      toast({
-        variant: "destructive",
-        title: "Error de Carga",
-        description: "No se pudo cargar el inventario desde la base de datos.",
-      });
-      setIsInitialized(true);
-    });
+  const handleInventoryUpdate = useCallback((data: Product[]) => {
+      setInventory(data);
+      if(!isInitialized) setIsInitialized(true);
+  },[isInitialized]);
 
-    return () => unsubscribe();
-  }, [firestore, toast]);
+  const handleSalesUpdate = useCallback((data: CompletedSale[]) => {
+      setCompletedSales(data);
+  },[]);
   
-  // Effect to load and sync completed sales from Firestore
+  useFirestoreSubscription<Product>(firestore, 'inventory', handleInventoryUpdate, 'name');
+  useFirestoreSubscription<CompletedSale>(firestore, 'completedSales', handleSalesUpdate, 'date', 'desc');
+
   useEffect(() => {
-    if (!firestore) return;
+    // If firestore becomes available, we are trying to initialize.
+    // If it goes away, we are de-initializing.
+    if (!firestore && isInitialized) {
+        setIsInitialized(false);
+    }
+  }, [firestore, isInitialized]);
 
-    const salesRef = collection(firestore, 'completedSales');
-    const q = query(salesRef, orderBy('date', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const salesData: CompletedSale[] = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          date: data.date.toDate().toISOString(),
-          items: data.items,
-          total: data.total
-        }
-      });
-      setCompletedSales(salesData);
-    }, (error) => {
-      console.error("Failed to fetch sales from Firestore", error);
-       toast({
-        variant: "destructive",
-        title: "Error de Carga",
-        description: "No se pudieron cargar las ventas completadas.",
-      });
-    });
-
-    return () => unsubscribe();
-
-  }, [firestore, toast]);
 
   const addProduct = useCallback(async (productData: Omit<Product, 'id'>) => {
     if (!firestore) return;
@@ -125,15 +128,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const productRef = doc(firestore, 'inventory', id);
     try {
       await updateDoc(productRef, productData);
-      // Also update items in current sale if they are there
-        setSaleItems(prevItems => {
-            const newItems = prevItems.map(item =>
-                item.productId === id
-                ? { ...item, name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category, subtotal: updatedProduct.price * item.quantity }
-                : item
-            );
-            return newItems;
-        });
+      setSaleItems(prevItems => {
+          const newItems = prevItems.map(item =>
+              item.productId === id
+              ? { ...item, name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category, subtotal: updatedProduct.price * item.quantity }
+              : item
+          );
+          return newItems;
+      });
     } catch (error) {
         console.error("Error updating document: ", error);
          toast({
@@ -149,7 +151,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const productRef = doc(firestore, 'inventory', productId);
     try {
         await deleteDoc(productRef);
-         // Also remove from current sale if it is there
         setSaleItems(prevItems => {
             const newItems = prevItems.filter(item => item.productId !== productId);
             return newItems;
