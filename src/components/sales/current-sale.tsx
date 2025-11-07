@@ -30,13 +30,7 @@ export function CurrentSale() {
         const timer = setTimeout(() => setLastAddedId(null), 1000);
         return () => clearTimeout(timer);
       }
-    } else {
-        // If the sale is cleared, reset the cash received.
-        if (cashReceived !== 0) {
-            setCashReceived(0);
-        }
     }
-  // We only want to run this when saleItems changes, not lastAddedId or cashReceived.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saleItems]);
 
