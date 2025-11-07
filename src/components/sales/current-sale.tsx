@@ -89,6 +89,7 @@ export function CurrentSale() {
               placeholder="Efectivo recibido"
               value={cashReceived > 0 ? cashReceived : ''}
               onChange={(e) => setCashReceived(parseFloat(e.target.value) || 0)}
+              className="text-right"
             />
           </div>
            {cashReceived > 0 && total > 0 && cashReceived >= total && (
@@ -98,9 +99,9 @@ export function CurrentSale() {
             </div>
            )}
            {cashReceived > 0 && total > 0 && cashReceived < total && (
-             <div className="text-destructive text-sm text-center">El efectivo recibido es menor que el total.</div>
+             <div className="text-destructive text-sm text-center font-semibold">El efectivo recibido es menor que el total.</div>
            )}
-          <Button size="lg" className="w-full" onClick={handleCompleteSale} disabled={total === 0}>
+          <Button size="lg" className="w-full" onClick={handleCompleteSale} disabled={total === 0 || cashReceived < total}>
             Completar Venta
           </Button>
         </CardFooter>
