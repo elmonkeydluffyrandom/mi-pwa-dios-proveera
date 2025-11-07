@@ -229,7 +229,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     try {
         await addDoc(collection(firestore, 'completedSales'), newSale);
-        clearSale();
+        // This is the crucial part: clear the sale right after it's saved.
+        clearSale(); 
     } catch (error) {
         console.error("Error adding sale to Firestore: ", error);
         toast({

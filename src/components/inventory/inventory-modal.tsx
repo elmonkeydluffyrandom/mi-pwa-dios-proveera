@@ -11,7 +11,7 @@ import { Product } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditProductModal } from './edit-product-modal';
 import { DeleteProductDialog } from './delete-product-dialog';
-
+import { CATEGORIES } from '@/lib/constants';
 
 interface InventoryModalProps {
   isOpen: boolean;
@@ -24,11 +24,29 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
-  const filteredInventory = useMemo(() => {
-    return inventory.filter(product =>
+  const groupedAndFilteredInventory = useMemo(() => {
+    const filtered = inventory.filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    ).sort((a,b) => a.name.localeCompare(b.name));
+    );
+
+    if (searchTerm) {
+        return [{ category: 'Resultados de la búsqueda', products: filtered.sort((a,b) => a.name.localeCompare(b.name)) }];
+    }
+
+    const grouped = CATEGORIES.reduce((acc, category) => {
+        const productsInCategory = filtered
+            .filter(p => p.category === category)
+            .sort((a,b) => a.name.localeCompare(b.name));
+        
+        if (productsInCategory.length > 0) {
+            acc.push({ category, products: productsInCategory });
+        }
+        return acc;
+    }, [] as { category: string; products: Product[] }[]);
+
+    return grouped;
+
   }, [inventory, searchTerm]);
 
   const handleEdit = (product: Product) => {
@@ -60,7 +78,7 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
         </div>
         <ScrollArea className="h-[60vh]">
           <Table>
-            <TableHeader className='sticky top-0 bg-card'>
+            <TableHeader className='sticky top-0 bg-card z-10'>
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Categoría</TableHead>
@@ -69,37 +87,48 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredInventory.length > 0 ? (
-                filteredInventory.map(product => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-center">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => handleEdit(product)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDelete(product)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+              {groupedAndFilteredInventory.length > 0 ? (
+                groupedAndFilteredInventory.map(({ category, products }) => (
+                  <React.Fragment key={category}>
+                    {!searchTerm && (
+                        <TableRow className="bg-secondary hover:bg-secondary/80">
+                            <TableCell colSpan={4} className="font-bold text-secondary-foreground">
+                                {category}
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    {products.map(product => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.category}</TableCell>
+                        <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-center">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={() => handleEdit(product)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDelete(product)} className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
                 ))
               ) : (
                  <TableRow>
                   <TableCell colSpan={4} className="text-center h-24">
-                    No se encontraron productos.
+                    No se encontraron productos o el inventario está vacío.
                   </TableCell>
                 </TableRow>
               )}

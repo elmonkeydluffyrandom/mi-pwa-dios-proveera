@@ -14,11 +14,11 @@ import { useToast } from '@/hooks/use-toast';
 export function CurrentSale() {
   const { saleItems, removeItemFromSale, completeSale } = useAppContext();
   const { toast } = useToast();
-  const [cashReceived, setCashReceived] = useState(0);
+  const [cashReceived, setCashReceived] = useState<number | string>('');
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
   const total = useMemo(() => saleItems.reduce((sum, item) => sum + item.subtotal, 0), [saleItems]);
-  const change = useMemo(() => (cashReceived > 0 ? cashReceived - total : 0), [cashReceived, total]);
+  const change = useMemo(() => (Number(cashReceived) > 0 ? Number(cashReceived) - total : 0), [cashReceived, total]);
   
   useEffect(() => {
     // This effect handles the flashing animation for the last added item.
@@ -35,10 +35,8 @@ export function CurrentSale() {
   }, [saleItems]);
 
   const handleCompleteSale = async () => {
-    if (total <= 0 || cashReceived < total) return;
+    if (total <= 0 || Number(cashReceived) < total) return;
     
-    // The completeSale function from the context handles clearing the items
-    // and saving to the database.
     await completeSale();
     
     toast({
@@ -47,8 +45,21 @@ export function CurrentSale() {
     });
     
     // Reset the local state of this component after the sale is completed.
-    setCashReceived(0);
+    setCashReceived('');
   }
+  
+  const handleCashReceivedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+        setCashReceived('');
+    } else {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+            setCashReceived(numValue);
+        }
+    }
+  }
+
 
   return (
     <Card className="shadow-lg flex flex-col h-full">
@@ -104,21 +115,26 @@ export function CurrentSale() {
             <Input
               type="number"
               placeholder="Efectivo recibido"
-              value={cashReceived > 0 ? cashReceived : ''}
-              onChange={(e) => setCashReceived(parseFloat(e.target.value) || 0)}
+              value={cashReceived}
+              onChange={handleCashReceivedChange}
+              onBlur={() => {
+                if (cashReceived === '') {
+                  setCashReceived(0);
+                }
+              }}
               className="text-right"
             />
           </div>
-           {cashReceived > 0 && total > 0 && cashReceived >= total && (
+           {Number(cashReceived) > 0 && total > 0 && Number(cashReceived) >= total && (
             <div className="flex justify-between items-center text-lg font-semibold text-primary">
                 <span>Cambio:</span>
                 <span>${change.toFixed(2)}</span>
             </div>
            )}
-           {cashReceived > 0 && total > 0 && cashReceived < total && (
+           {Number(cashReceived) > 0 && total > 0 && Number(cashReceived) < total && (
              <div className="text-destructive text-sm text-center font-semibold">El efectivo recibido es menor que el total.</div>
            )}
-          <Button size="lg" className="w-full" onClick={handleCompleteSale} disabled={total === 0 || cashReceived < total}>
+          <Button size="lg" className="w-full" onClick={handleCompleteSale} disabled={total === 0 || Number(cashReceived) < total}>
             Completar Venta
           </Button>
         </CardFooter>

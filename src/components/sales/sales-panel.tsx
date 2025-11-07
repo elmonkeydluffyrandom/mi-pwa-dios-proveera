@@ -42,7 +42,11 @@ export function SalesPanel() {
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
-      // The useEffect hook will now handle resetting the state
+      // After adding, reset the search fields for the next item in the *same* sale.
+      // The useEffect hook will now handle resetting the state for a *new* sale.
+      setSearchQuery('');
+      setSelectedProduct(null);
+      setQuantity(1);
     }
   };
   
