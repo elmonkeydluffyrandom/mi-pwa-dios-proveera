@@ -17,32 +17,32 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-card">
+      <header className="sticky top-0 z-40 w-full border-b bg-primary text-primary-foreground">
         <div className="container flex items-center justify-between h-16 max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2">
-            <ShoppingBasket className="h-7 w-7 text-primary" />
-            <h1 className="text-xl font-bold tracking-tight text-foreground font-headline">
+            <ShoppingBasket className="h-7 w-7" />
+            <h1 className="text-xl font-bold tracking-tight font-headline">
               Tienda "Dios Proveerá"
             </h1>
           </div>
           <div className="flex items-center gap-2">
-             <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}>
+             <Button variant="outline" size="sm" onClick={() => setReportOpen(true)} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
               <BarChart3 className="mr-2 h-4 w-4" />
               Ver Reporte
             </Button>
-            <Button variant="outline" size="sm" onClick={refreshInventory}>
+            <Button variant="outline" size="sm" onClick={refreshInventory} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refrescar
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setInventoryOpen(true)}>
+            <Button variant="outline" size="sm" onClick={() => setInventoryOpen(true)} className="text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/10 hover:text-primary-foreground">
               <Boxes className="mr-2 h-4 w-4" />
               Inventario
             </Button>
-            <Button size="sm" onClick={() => setAddProductOpen(true)}>
+            <Button size="sm" onClick={() => setAddProductOpen(true)} className="bg-accent text-accent-foreground hover:bg-accent/90">
               <PlusCircle className="mr-2 h-4 w-4" />
               Agregar Producto
             </Button>
-             <Button variant="accent" size="sm" onClick={() => setSuggesterOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+             <Button variant="secondary" size="sm" onClick={() => setSuggesterOpen(true)} className="bg-secondary/80 text-secondary-foreground hover:bg-secondary/90">
               <Lightbulb className="mr-2 h-4 w-4" />
               Sugerir Productos
             </Button>
