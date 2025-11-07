@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
@@ -10,9 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '@/lib/constants';
-import type { CompletedSale, SaleItem } from '@/lib/types';
+import type { CompletedSale } from '@/lib/types';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 interface SalesReportModalProps {
   isOpen: boolean;
@@ -77,8 +78,9 @@ function processSalesData(completedSales: CompletedSale[]) {
 
 
 export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps) {
-  const { completedSales } = useAppContext();
+  const { completedSales, clearCompletedSales } = useAppContext();
   const reportData = useMemo(() => processSalesData(completedSales), [completedSales]);
+  const [isAlertOpen, setAlertOpen] = useState(false);
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -121,6 +123,11 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
 
     doc.save(`reporte-ventas-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
+
+  const handleClearReport = () => {
+    clearCompletedSales();
+    setAlertOpen(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -180,7 +187,27 @@ export function SalesReportModal({ isOpen, onOpenChange }: SalesReportModalProps
                 ))}
               </Accordion>
             </ScrollArea>
-             <DialogFooter>
+             <DialogFooter className='items-center justify-between w-full'>
+                <AlertDialog open={isAlertOpen} onOpenChange={setAlertOpen}>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Reiniciar Reporte
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Esto eliminará permanentemente todas las ventas completadas y reiniciará el reporte.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearReport}>Sí, reiniciar reporte</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                 <Button onClick={exportToPDF}>
                     <Download className="mr-2 h-4 w-4" />
                     Exportar a PDF

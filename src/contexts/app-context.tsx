@@ -14,6 +14,8 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  writeBatch,
+  getDocs,
   Firestore
 } from 'firebase/firestore';
 
@@ -29,6 +31,7 @@ interface AppContextType {
   clearSale: () => void;
   completeAndResetSale: () => Promise<void>;
   completedSales: CompletedSale[];
+  clearCompletedSales: () => Promise<void>;
   isInitialized: boolean;
 }
 
@@ -250,6 +253,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   }, [saleItems, clearSale, firestore, toast]);
 
+    const clearCompletedSales = useCallback(async () => {
+        if (!firestore) return;
+        const salesRef = collection(firestore, 'completedSales');
+        try {
+            const querySnapshot = await getDocs(salesRef);
+            const batch = writeBatch(firestore);
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            toast({
+                title: "Reporte Reiniciado",
+                description: "Todas las ventas completadas han sido eliminadas."
+            });
+        } catch (error) {
+            console.error("Error clearing completed sales: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error de base de datos",
+                description: "No se pudo reiniciar el reporte de ventas."
+            });
+        }
+    }, [firestore, toast]);
+
 
   const value = {
     inventory,
@@ -263,6 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearSale,
     completeAndResetSale,
     completedSales,
+    clearCompletedSales,
     isInitialized: firestore ? isInitialized : false,
   };
 
