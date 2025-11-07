@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '../ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 export function CurrentSale() {
-  const { saleItems, removeItemFromSale, clearSale } = useAppContext();
+  const { saleItems, removeItemFromSale, completeSale } = useAppContext();
+  const { toast } = useToast();
   const [cashReceived, setCashReceived] = useState(0);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
@@ -25,13 +27,18 @@ export function CurrentSale() {
         const timer = setTimeout(() => setLastAddedId(null), 1000);
         return () => clearTimeout(timer);
       }
+    } else {
+        // Reset cash received when sale is cleared
+        setCashReceived(0);
     }
   }, [saleItems, lastAddedId]);
 
   const handleCompleteSale = () => {
-    // In a real app, you'd persist the sale record here.
-    // For this PWA, we just clear it.
-    clearSale();
+    completeSale();
+    toast({
+        title: "Venta completada",
+        description: `La venta por un total de $${total.toFixed(2)} ha sido registrada.`,
+    });
     setCashReceived(0);
   }
 
@@ -67,7 +74,7 @@ export function CurrentSale() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                     No hay productos en la venta.
                   </TableCell>
                 </TableRow>

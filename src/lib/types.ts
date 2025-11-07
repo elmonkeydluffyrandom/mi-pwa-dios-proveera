@@ -11,4 +11,12 @@ export interface SaleItem {
   price: number;
   quantity: number;
   subtotal: number;
+  category: string;
+}
+
+export interface CompletedSale {
+  id: string;
+  date: string;
+  items: SaleItem[];
+  total: number;
 }

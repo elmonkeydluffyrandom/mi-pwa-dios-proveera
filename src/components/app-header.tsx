@@ -1,16 +1,18 @@
 'use client';
 import { useState } from 'react';
-import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RefreshCw } from 'lucide-react';
+import { ShoppingBasket, Boxes, PlusCircle, Lightbulb, RefreshCw, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InventoryModal } from '@/components/inventory/inventory-modal';
 import { AddProductModal } from '@/components/inventory/add-product-modal';
 import { ProductSuggesterModal } from '@/components/ai/product-suggester-modal';
+import { SalesReportModal } from '@/components/sales/sales-report-modal';
 import { useAppContext } from '@/contexts/app-context';
 
 export function AppHeader() {
   const [isInventoryOpen, setInventoryOpen] = useState(false);
   const [isAddProductOpen, setAddProductOpen] = useState(false);
   const [isSuggesterOpen, setSuggesterOpen] = useState(false);
+  const [isReportOpen, setReportOpen] = useState(false);
   const { refreshInventory } = useAppContext();
 
   return (
@@ -24,6 +26,10 @@ export function AppHeader() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+             <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}>
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Ver Reporte
+            </Button>
             <Button variant="outline" size="sm" onClick={refreshInventory}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refrescar
@@ -47,6 +53,7 @@ export function AppHeader() {
       <InventoryModal isOpen={isInventoryOpen} onOpenChange={setInventoryOpen} />
       <AddProductModal isOpen={isAddProductOpen} onOpenChange={setAddProductOpen} />
       <ProductSuggesterModal isOpen={isSuggesterOpen} onOpenChange={setSuggesterOpen} />
+      <SalesReportModal isOpen={isReportOpen} onOpenChange={setReportOpen} />
     </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { Product, SaleItem } from '@/lib/types';
+import type { Product, SaleItem, CompletedSale } from '@/lib/types';
 import { initialProducts } from '@/lib/initial-products';
 import { useToast } from "@/hooks/use-toast"
 
@@ -15,6 +15,8 @@ interface AppContextType {
   removeItemFromSale: (productId: string) => void;
   updateSaleItemQuantity: (productId: string, quantity: number) => void;
   clearSale: () => void;
+  completeSale: () => void;
+  completedSales: CompletedSale[];
   isInitialized: boolean;
 }
 
@@ -24,6 +26,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast()
   const [inventory, setInventory] = useState<Product[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+  const [completedSales, setCompletedSales] = useState<CompletedSale[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const storedSale = window.localStorage.getItem('currentSale');
       if (storedSale) {
         setSaleItems(JSON.parse(storedSale));
+      }
+
+      // Load completed sales
+      const storedCompletedSales = window.localStorage.getItem('completedSales');
+      if(storedCompletedSales) {
+        setCompletedSales(JSON.parse(storedCompletedSales));
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
@@ -112,6 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           price: product.price,
           quantity,
           subtotal: product.price * quantity,
+          category: product.category,
         }];
       }
       updateLocalStorage('currentSale', newItems);
@@ -148,6 +158,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.localStorage.removeItem('currentSale');
   }, []);
 
+  const completeSale = useCallback(() => {
+    if (saleItems.length === 0) return;
+    
+    setCompletedSales(prevSales => {
+        const newSale: CompletedSale = {
+            id: new Date().toISOString(),
+            date: new Date().toISOString(),
+            items: saleItems,
+            total: saleItems.reduce((sum, item) => sum + item.subtotal, 0),
+        };
+        const newCompletedSales = [...prevSales, newSale];
+        updateLocalStorage('completedSales', newCompletedSales);
+        return newCompletedSales;
+    });
+    
+    clearSale();
+  }, [saleItems, clearSale, updateLocalStorage]);
+
+
   const value = {
     inventory,
     addProduct,
@@ -157,6 +186,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeItemFromSale,
     updateSaleItemQuantity,
     clearSale,
+    completeSale,
+    completedSales,
     isInitialized
   };
 
