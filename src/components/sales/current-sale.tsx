@@ -53,6 +53,7 @@ export function CurrentSale() {
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
+                <TableHead className="text-right">Precio Unit.</TableHead>
                 <TableHead className="text-center">Cant.</TableHead>
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -63,6 +64,7 @@ export function CurrentSale() {
                 saleItems.map(item => (
                   <TableRow key={item.productId} className={item.productId === lastAddedId ? 'animate-flash' : ''}>
                     <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
                     <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
                     <TableCell>
@@ -74,7 +76,7 @@ export function CurrentSale() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     No hay productos en la venta.
                   </TableCell>
                 </TableRow>
