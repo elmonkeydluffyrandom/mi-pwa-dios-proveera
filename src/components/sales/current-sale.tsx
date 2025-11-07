@@ -1,20 +1,26 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, CheckCircle } from 'lucide-react';
 import { useAppContext } from '@/contexts/app-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '../ui/scroll-area';
+import { Input } from '../ui/input';
 
 
 export function CurrentSale() {
-  const { saleItems, removeItemFromSale } = useAppContext();
+  const { saleItems, removeItemFromSale, completeAndResetSale } = useAppContext();
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
-
-  const total = useMemo(() => saleItems.reduce((sum, item) => sum + item.subtotal, 0), [saleItems]);
+  const [cashReceived, setCashReceived] = useState<number | string>(0);
   
+  const total = useMemo(() => saleItems.reduce((sum, item) => sum + item.subtotal, 0), [saleItems]);
+  const change = useMemo(() => {
+    const received = typeof cashReceived === 'string' ? parseFloat(cashReceived) : cashReceived;
+    return received > 0 ? received - total : 0;
+  }, [cashReceived, total]);
+
   useEffect(() => {
     if (saleItems.length > 0) {
       const lastItem = saleItems[saleItems.length - 1];
@@ -25,6 +31,16 @@ export function CurrentSale() {
       }
     }
   }, [saleItems, lastAddedId]);
+
+  useEffect(() => {
+    if (saleItems.length === 0) {
+      setCashReceived(0);
+    }
+  }, [saleItems]);
+
+  const handleCompleteSale = async () => {
+    await completeAndResetSale();
+  };
 
   return (
     <Card className="shadow-lg flex flex-col h-full">
@@ -75,6 +91,32 @@ export function CurrentSale() {
             <span>Total:</span>
             <span>${total.toFixed(2)}</span>
           </div>
+          <div className="flex items-end gap-4">
+              <div className="flex-1 space-y-1">
+                <label htmlFor='cash-received' className='text-sm font-medium'>Efectivo Recibido</label>
+                <Input
+                    id='cash-received'
+                    type='number'
+                    value={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    className='text-lg'
+                    placeholder='0.00'
+                />
+              </div>
+              <div className="flex-1 text-right space-y-1">
+                <p className='text-sm font-medium'>Cambio:</p>
+                <p className='text-xl font-bold'>${change.toFixed(2)}</p>
+              </div>
+          </div>
+          <Button
+            onClick={handleCompleteSale}
+            disabled={saleItems.length === 0}
+            size='lg'
+            className='w-full'
+          >
+            <CheckCircle className="mr-2 h-5 w-5" />
+            Completar y Nueva Venta
+          </Button>
         </CardFooter>
         )}
     </Card>

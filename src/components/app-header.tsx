@@ -13,7 +13,6 @@ export function AppHeader() {
   const [isAddProductOpen, setAddProductOpen] = useState(false);
   const [isSuggesterOpen, setSuggesterOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
-  const { completeAndResetSale, saleItems } = useAppContext();
 
   return (
     <>
@@ -29,15 +28,6 @@ export function AppHeader() {
              <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" />
               Ver Reporte
-            </Button>
-            <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={completeAndResetSale}
-                disabled={saleItems.length === 0}
-            >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Completar y Nueva Venta
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setInventoryOpen(true)}>
               <Boxes className="mr-2 h-4 w-4" />
