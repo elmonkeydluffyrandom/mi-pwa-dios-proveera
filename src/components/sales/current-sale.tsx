@@ -21,25 +21,38 @@ export function CurrentSale() {
   const change = useMemo(() => (cashReceived > 0 ? cashReceived - total : 0), [cashReceived, total]);
   
   useEffect(() => {
+    // This effect handles the flashing animation for the last added item.
     if (saleItems.length > 0) {
       const lastItem = saleItems[saleItems.length - 1];
+      // A new item is defined as one that wasn't the last one we tracked.
       if(lastItem.productId !== lastAddedId) {
         setLastAddedId(lastItem.productId);
         const timer = setTimeout(() => setLastAddedId(null), 1000);
         return () => clearTimeout(timer);
       }
     } else {
-        // Reset cash received when sale is cleared
-        setCashReceived(0);
+        // If the sale is cleared, reset the cash received.
+        if (cashReceived !== 0) {
+            setCashReceived(0);
+        }
     }
-  }, [saleItems, lastAddedId]);
+  // We only want to run this when saleItems changes, not lastAddedId or cashReceived.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saleItems]);
 
   const handleCompleteSale = async () => {
+    if (total <= 0 || cashReceived < total) return;
+    
+    // The completeSale function from the context handles clearing the items
+    // and saving to the database.
     await completeSale();
+    
     toast({
         title: "Venta completada",
         description: `La venta por un total de $${total.toFixed(2)} ha sido registrada.`,
     });
+    
+    // Reset the local state of this component after the sale is completed.
     setCashReceived(0);
   }
 

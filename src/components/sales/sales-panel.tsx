@@ -17,8 +17,8 @@ export function SalesPanel() {
   const [isPopoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
-    // If saleItems is empty, it means a sale was just completed or cleared.
-    // We reset the state of this component.
+    // This effect ensures that if the sale is completed (saleItems goes to 0),
+    // the SalesPanel resets its internal state to be ready for the next sale.
     if (saleItems.length === 0) {
       setSelectedProduct(null);
       setSearchQuery('');
@@ -42,9 +42,7 @@ export function SalesPanel() {
   const handleAddToSale = () => {
     if (selectedProduct && Number(quantity) > 0) {
       addItemToSale(selectedProduct, Number(quantity));
-      setSelectedProduct(null);
-      setSearchQuery('');
-      setQuantity(1);
+      // The useEffect hook will now handle resetting the state
     }
   };
   
