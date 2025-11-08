@@ -7,6 +7,7 @@ import { AddProductModal } from '@/components/inventory/add-product-modal';
 import { SalesReportModal } from '@/components/sales/sales-report-modal';
 import { useAppContext } from '@/contexts/app-context';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { ThemeToggle } from './theme-toggle';
 
 export function AppHeader() {
   const [isInventoryOpen, setInventoryOpen] = useState(false);
@@ -63,9 +64,11 @@ export function AppHeader() {
               <PlusCircle className="mr-2 h-4 w-4" />
               Agregar Producto
             </Button>
+            <ThemeToggle />
           </div>
           {/* Mobile Menu */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+             <ThemeToggle />
             <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
