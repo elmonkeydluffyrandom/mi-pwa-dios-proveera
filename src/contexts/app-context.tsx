@@ -16,8 +16,6 @@ import {
   orderBy,
   writeBatch,
   getDocs,
-  Firestore,
-  getCountFromServer
 } from 'firebase/firestore';
 
 interface AppContextType {
@@ -37,36 +35,6 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const initialProducts: Omit<Product, 'id'>[] = [
-  { name: 'Coca-Cola Desechable 3L', price: 56, category: 'Abarrotes' },
-  { name: 'Coca-Cola Desechable 2.5L', price: 48, category: 'Abarrotes' },
-  { name: 'Coca-Cola Retornable 3L', price: 46, category: 'Abarrotes' },
-  { name: 'Coca-Cola Retornable 1.5L', price: 28, category: 'Abarrotes' },
-  { name: 'Coca-Cola 1.35L', price: 30, category: 'Abarrotes' },
-  { name: 'Coca-Cola 600ml', price: 22, category: 'Abarrotes' },
-  { name: 'Coca-Cola de Lata', price: 22, category: 'Abarrotes' },
-  { name: 'Refresco de sabor de 1.75L', price: 35, category: 'Abarrotes' },
-  { name: 'Refresco de sabor de 600ml', price: 22, category: 'Abarrotes' },
-  { name: 'Jugo Del Valle 3L', price: 40, category: 'Abarrotes' },
-  { name: 'Jugo Del Valle 2L', price: 33, category: 'Abarrotes' },
-];
-
-async function seedInitialData(firestore: Firestore) {
-    const inventoryRef = collection(firestore, 'inventory');
-    const snapshot = await getCountFromServer(inventoryRef);
-    
-    if (snapshot.data().count === 0) {
-        const batch = writeBatch(firestore);
-        initialProducts.forEach(productData => {
-            const newDocRef = doc(inventoryRef); // Create a new doc with a generated ID
-            batch.set(newDocRef, productData);
-        });
-        await batch.commit();
-        console.log('Initial inventory has been seeded.');
-    }
-}
-
 
 function useFirestoreSubscription<T>(
     firestore: Firestore | undefined,
@@ -118,17 +86,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [completedSales, setCompletedSales] = useState<CompletedSale[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    if (firestore && !isInitialized) {
-        seedInitialData(firestore).then(() => {
-            // Seeding is done, subscriptions will pick up the data
-        }).catch(error => {
-            console.error("Error seeding data: ", error);
-        });
-    }
-  }, [firestore, isInitialized]);
-
 
   const handleInventoryUpdate = useCallback((data: Product[]) => {
       setInventory(data);
