@@ -5,12 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AppProvider } from '@/contexts/app-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { PwaManager } from '@/components/pwa-manager';
 
 
 export const metadata: Metadata = {
   title: 'Tienda "Dios Proveerá"',
   description: 'Aplicación de punto de venta offline para pequeñas tiendas.',
-  viewport: 'width=device-width, initial-scale=1', 
+  viewport: 'width=device-width, initial-scale=1',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -27,6 +29,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        <meta name="theme-color" content="#A7D1AB" />
       </head>
       <body className={cn('font-body antialiased', 'min-h-screen bg-background font-sans')}>
         <ThemeProvider
@@ -41,6 +44,7 @@ export default function RootLayout({
             </AppProvider>
           </FirebaseClientProvider>
           <Toaster />
+          <PwaManager />
         </ThemeProvider>
       </body>
     </html>
