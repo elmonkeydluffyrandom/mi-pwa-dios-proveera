@@ -1,10 +1,9 @@
 const CACHE_NAME = 'tienda-pwa-cache-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  // Agrega aquí otros recursos estáticos que quieras cachear
-  // '/styles/main.css',
-  // '/script/main.js'
+  '/',                // La página principal
+  '/manifest.json',   // La "cédula de identidad" de la app
+  '/icon-192.png',    // Icono pequeño
+  '/icon-512.png'     // Icono grande
 ];
 
 self.addEventListener('install', event => {

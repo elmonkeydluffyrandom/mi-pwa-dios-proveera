@@ -46,7 +46,24 @@ export default function RootLayout({
           <Toaster />
           <PwaManager />
         </ThemeProvider>
-      </body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('SW registrado con éxito');
+                    },
+                    function(err) {
+                      console.log('Error al registrar SW:', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        /></body>
     </html>
   );
 }
