@@ -1,12 +1,15 @@
 'use client';
 import React, { useState, useMemo } from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
 import { useAppContext } from '@/contexts/app-context';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Search, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Search, MoreVertical, Pencil, Trash2, Download } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditProductModal } from './edit-product-modal';
@@ -57,6 +60,33 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
     setDeletingProduct(product);
   }
 
+    const exportToPDF = () => {
+    const doc = new jsPDF();
+    const today = format(new Date(), 'dd/MM/yyyy');
+    
+    doc.setFontSize(20);
+    doc.text('Inventario - Dios Proveerá', 14, 22);
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${today}`, 14, 30);
+    
+    const tableData = inventory.map(product => [
+      product.name,
+      product.category,
+      `$${product.price.toFixed(2)}`
+    ]);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Producto', 'Categoría', 'Precio']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [36, 56, 99] },
+    });
+
+    doc.save(`inventario-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  };
+
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -67,14 +97,20 @@ export function InventoryModal({ isOpen, onOpenChange }: InventoryModalProps) {
             Aquí puedes ver, editar y eliminar los productos disponibles en la tienda.
           </DialogDescription>
         </DialogHeader>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por nombre o categoría..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Buscar por nombre o categoría..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+             <Button onClick={exportToPDF} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Exportar a PDF
+            </Button>
         </div>
         <ScrollArea className="h-[60vh]">
           <Table>
