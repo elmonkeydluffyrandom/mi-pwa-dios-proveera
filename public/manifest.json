@@ -1,10 +1,10 @@
 {
   "name": "Tienda Dios Proveerá",
-  "short_name": "Dios Proveerá",
+  "short_name": "TiendaPWA",
   "description": "Aplicación de punto de venta offline para pequeñas tiendas.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F0FAF2",
+  "background_color": "#ffffff",
   "theme_color": "#A7D1AB",
   "icons": [
     {

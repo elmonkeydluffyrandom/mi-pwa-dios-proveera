@@ -1,47 +1,62 @@
-// Define el nombre del caché y los archivos a cachear
-const CACHE_NAME = 'dios-proveera-pwa-cache-v1';
+const CACHE_NAME = 'tienda-pwa-cache-v1';
 const urlsToCache = [
   '/',
-  '/manifest.json'
+  '/index.html',
+  // Agrega aquí otros recursos estáticos que quieras cachear
+  // '/styles/main.css',
+  // '/script/main.js'
 ];
 
-// Instalación del Service Worker
-self.addEventListener('install', (event) => {
-  // Realiza la instalación y cachea los archivos principales
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
+      .then(cache => {
         console.log('Cache abierto');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Intercepta las peticiones de red
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    // Intenta buscar el recurso en el caché primero
     caches.match(event.request)
-      .then((response) => {
-        // Si se encuentra en caché, lo devuelve
+      .then(response => {
+        // Si la respuesta está en el caché, la devolvemos
         if (response) {
           return response;
         }
-        // Si no, lo busca en la red
-        return fetch(event.request);
+
+        // Si no, intentamos obtenerla de la red
+        return fetch(event.request).then(
+          (response) => {
+            // Si la respuesta es inválida, simplemente la devolvemos
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clonamos la respuesta. Una respuesta es un stream y solo se puede consumir una vez.
+            // Necesitamos una para el navegador y otra para el caché.
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        );
       })
-  );
+    );
 });
 
-// Activación del Service Worker y limpieza de cachés antiguos
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            // Borra los cachés que no están en la lista blanca
             return caches.delete(cacheName);
           }
         })
