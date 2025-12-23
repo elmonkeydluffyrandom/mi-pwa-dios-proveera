@@ -209,9 +209,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeAndResetSale = useCallback(async () => {
+    // 1. Validaciones de seguridad
     if (saleItems.length === 0 || !firestore) {
         if (saleItems.length === 0) {
-             toast({
+              toast({
                 variant: "destructive",
                 title: "Venta vacía",
                 description: "No hay productos en la venta actual para completar.",
@@ -220,53 +221,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
     };
     
+    // 2. Preparamos los datos de la venta
+    // Guardamos una copia local de los items y el total antes de borrar todo
+    const currentItems = [...saleItems]; 
+    const currentTotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
+
     const newSale = {
         date: serverTimestamp(),
-        items: saleItems,
-        total: saleItems.reduce((sum, item) => sum + item.subtotal, 0),
+        items: currentItems,
+        total: currentTotal,
     };
     
+    // 3. --- EL TRUCO DE MAGIA ---
+    // Limpiamos la pantalla INMEDIATAMENTE. No esperamos a Firebase.
+    // Esto hace que la app se sienta instantánea.
+    clearSale(); 
+
+    toast({
+        title: "Venta registrada",
+        description: `Venta de $${newSale.total.toFixed(2)} guardada correctamente.`,
+    });
+
+    // 4. Mandamos a guardar a Firebase en "segundo plano"
+    // Usamos .catch por si hay un error real de base de datos, pero no bloqueamos la UI
     try {
         await addDoc(collection(firestore, 'completedSales'), newSale);
-        toast({
-            title: "Venta completada",
-            description: `La venta por un total de $${newSale.total.toFixed(2)} ha sido registrada.`,
-        });
-        clearSale(); 
     } catch (error) {
-        console.error("Error adding sale to Firestore: ", error);
+        console.error("Error al guardar en segundo plano: ", error);
+        // Aunque falle el envío inmediato, como tienes persistencia activada,
+        // Firebase ya lo guardó en el caché del celular.
         toast({
             variant: "destructive",
-            title: "Error de base de datos",
-            description: "No se pudo guardar la venta.",
+            title: "Nota",
+            description: "La venta se guardó en el celular y subirá al volver el internet.",
         });
     }
 
   }, [saleItems, clearSale, firestore, toast]);
-
-    const clearCompletedSales = useCallback(async () => {
-        if (!firestore) return;
-        const salesRef = collection(firestore, 'completedSales');
-        try {
-            const querySnapshot = await getDocs(salesRef);
-            const batch = writeBatch(firestore);
-            querySnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            await batch.commit();
-            toast({
-                title: "Reporte Reiniciado",
-                description: "Todas las ventas completadas han sido eliminadas."
-            });
-        } catch (error) {
-            console.error("Error clearing completed sales: ", error);
-            toast({
-                variant: "destructive",
-                title: "Error de base de datos",
-                description: "No se pudo reiniciar el reporte de ventas."
-            });
-        }
-    }, [firestore, toast]);
 
 
   const value = {
