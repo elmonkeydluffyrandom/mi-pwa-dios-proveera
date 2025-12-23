@@ -37,6 +37,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Hook auxiliar para suscripciones
 function useFirestoreSubscription<T>(
     firestore: Firestore | undefined,
     collectionName: string,
@@ -67,8 +68,7 @@ function useFirestoreSubscription<T>(
             });
             callback(data);
         }, (error) => {
-            console.error(`Failed to fetch ${collectionName} from Firestore`, error);
-            // Evitamos spam de toasts si falla la conexión constante
+            console.error(`Error al leer ${collectionName}`, error);
         });
 
         return () => unsubscribe();
@@ -197,11 +197,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSaleItems([]);
   }, []);
 
-  // --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
+  // --- AQUÍ ESTÁ LA SOLUCIÓN DEL BLOQUEO ---
   const completeAndResetSale = useCallback(async () => {
     if (saleItems.length === 0) return;
     
-    // 1. Guardamos los datos en variables locales antes de borrar
+    // 1. Clonar datos importantes
     const itemsToSave = [...saleItems];
     const totalToSave = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
     
@@ -211,22 +211,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         total: totalToSave,
     };
 
-    // 2. ¡LIMPIEZA INMEDIATA! 
-    // Ejecutamos esto PRIMERO para que la UI responda al instante
+    // 2. ¡LIMPIEZA INMEDIATA! (Esto destraba la UI)
+    // No usamos 'await' aquí, limpiamos el estado visual ya.
     clearSale(); 
     
     toast({
-        title: "Venta Registrada",
+        title: "Venta Completada",
         description: `Total: $${totalToSave.toFixed(2)}`,
-        duration: 2000,
+        duration: 1500,
     });
 
-    // 3. Enviamos a Firebase DESPUÉS y sin bloquear la UI
+    // 3. Enviar a Firebase en "segundo plano"
+    // Fíjate que NO hay un 'await' antes de addDoc.
+    // Esto permite que el código siga corriendo aunque no haya internet.
     if (firestore) {
         addDoc(collection(firestore, 'completedSales'), newSale)
             .catch((error) => {
-                console.error("Error guardando en background: ", error);
-                // No mostramos error al usuario porque en offline es normal que quede pendiente
+                console.error("La venta se guardará cuando regrese internet: ", error);
             });
     }
 
