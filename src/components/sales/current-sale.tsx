@@ -114,7 +114,7 @@ export function CurrentSale() {
             className='w-full'
           >
             <CheckCircle className="mr-2 h-5 w-5" />
-            Completar (V2)
+            Completar y Nueva Venta
           </Button>
         </CardFooter>
         )}
