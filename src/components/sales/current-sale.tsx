@@ -36,8 +36,8 @@ export function CurrentSale() {
     }
   }, [saleItems, lastAddedId]);
 
-  const handleCompleteSale = async () => {
-    await completeAndResetSale();
+  const handleCompleteSale = () => {
+    completeAndResetSale();
   };
 
   return (
