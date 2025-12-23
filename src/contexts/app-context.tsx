@@ -16,6 +16,7 @@ import {
   orderBy,
   writeBatch,
   getDocs,
+  type Firestore
 } from 'firebase/firestore';
 
 interface AppContextType {
@@ -54,7 +55,7 @@ function useFirestoreSubscription<T>(
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => {
                 const docData = doc.data();
-                // Special handling for timestamp fields
+                // Manejo especial para fechas de Firebase
                 if (docData.date && typeof docData.date.toDate === 'function') {
                     return {
                         id: doc.id,
@@ -67,11 +68,7 @@ function useFirestoreSubscription<T>(
             callback(data);
         }, (error) => {
             console.error(`Failed to fetch ${collectionName} from Firestore`, error);
-            toast({
-                variant: "destructive",
-                title: "Error de Carga",
-                description: `No se pudo cargar ${collectionName}.`,
-            });
+            // Evitamos spam de toasts si falla la conexión constante
         });
 
         return () => unsubscribe();
@@ -108,7 +105,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error("Error adding document: ", error);
         toast({
             variant: "destructive",
-            title: "Error de base de datos",
+            title: "Error",
             description: "No se pudo agregar el producto.",
         });
     }
@@ -120,6 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const productRef = doc(firestore, 'inventory', id);
     try {
       await updateDoc(productRef, productData);
+      // Actualización optimista local
       setSaleItems(prevItems => {
           const newItems = prevItems.map(item =>
               item.productId === id
@@ -132,7 +130,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error("Error updating document: ", error);
          toast({
             variant: "destructive",
-            title: "Error de base de datos",
+            title: "Error",
             description: "No se pudo actualizar el producto.",
         });
     }
@@ -143,15 +141,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const productRef = doc(firestore, 'inventory', productId);
     try {
         await deleteDoc(productRef);
-        setSaleItems(prevItems => {
-            const newItems = prevItems.filter(item => item.productId !== productId);
-            return newItems;
-        });
+        setSaleItems(prevItems => prevItems.filter(item => item.productId !== productId));
     } catch (error) {
          console.error("Error deleting document: ", error);
          toast({
             variant: "destructive",
-            title: "Error de base de datos",
+            title: "Error",
             description: "No se pudo eliminar el producto.",
         });
     }
@@ -161,15 +156,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addItemToSale = useCallback((product: Product, quantity: number) => {
     setSaleItems(prevItems => {
       const existingItem = prevItems.find(item => item.productId === product.id);
-      let newItems;
       if (existingItem) {
-        newItems = prevItems.map(item =>
+        return prevItems.map(item =>
           item.productId === product.id
             ? { ...item, quantity: item.quantity + quantity, subtotal: item.price * (item.quantity + quantity) }
             : item
         );
       } else {
-        newItems = [...prevItems, {
+        return [...prevItems, {
           productId: product.id,
           name: product.name,
           price: product.price,
@@ -178,15 +172,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           category: product.category,
         }];
       }
-      return newItems;
     });
   }, []);
 
   const removeItemFromSale = useCallback((productId: string) => {
-    setSaleItems(prevItems => {
-      const newItems = prevItems.filter(item => item.productId !== productId);
-      return newItems;
-    });
+    setSaleItems(prevItems => prevItems.filter(item => item.productId !== productId));
   }, []);
 
   const updateSaleItemQuantity = useCallback((productId: string, quantity: number) => {
@@ -195,12 +185,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
     setSaleItems(prevItems => {
-      const newItems = prevItems.map(item =>
+      return prevItems.map(item =>
         item.productId === productId
           ? { ...item, quantity, subtotal: item.price * quantity }
           : item
       );
-      return newItems;
     });
   }, [removeItemFromSale]);
 
@@ -208,56 +197,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSaleItems([]);
   }, []);
 
+  // --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
   const completeAndResetSale = useCallback(async () => {
-    // 1. Validaciones de seguridad
-    if (saleItems.length === 0 || !firestore) {
-        if (saleItems.length === 0) {
-              toast({
-                variant: "destructive",
-                title: "Venta vacía",
-                description: "No hay productos en la venta actual para completar.",
-            });
-        }
-        return;
-    };
+    if (saleItems.length === 0) return;
     
-    // 2. Preparamos los datos de la venta
-    // Guardamos una copia local de los items y el total antes de borrar todo
-    const currentItems = [...saleItems]; 
-    const currentTotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
-
+    // 1. Guardamos los datos en variables locales antes de borrar
+    const itemsToSave = [...saleItems];
+    const totalToSave = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
+    
     const newSale = {
         date: serverTimestamp(),
-        items: currentItems,
-        total: currentTotal,
+        items: itemsToSave,
+        total: totalToSave,
     };
-    
-    // 3. --- EL TRUCO DE MAGIA ---
-    // Limpiamos la pantalla INMEDIATAMENTE. No esperamos a Firebase.
-    // Esto hace que la app se sienta instantánea.
-    clearSale(); 
 
+    // 2. ¡LIMPIEZA INMEDIATA! 
+    // Ejecutamos esto PRIMERO para que la UI responda al instante
+    clearSale(); 
+    
     toast({
-        title: "Venta registrada",
-        description: `Venta de $${newSale.total.toFixed(2)} guardada correctamente.`,
+        title: "Venta Registrada",
+        description: `Total: $${totalToSave.toFixed(2)}`,
+        duration: 2000,
     });
 
-    // 4. Mandamos a guardar a Firebase en "segundo plano"
-    // Usamos .catch por si hay un error real de base de datos, pero no bloqueamos la UI
-    try {
-        await addDoc(collection(firestore, 'completedSales'), newSale);
-    } catch (error) {
-        console.error("Error al guardar en segundo plano: ", error);
-        // Aunque falle el envío inmediato, como tienes persistencia activada,
-        // Firebase ya lo guardó en el caché del celular.
-        toast({
-            variant: "destructive",
-            title: "Nota",
-            description: "La venta se guardó en el celular y subirá al volver el internet.",
-        });
+    // 3. Enviamos a Firebase DESPUÉS y sin bloquear la UI
+    if (firestore) {
+        addDoc(collection(firestore, 'completedSales'), newSale)
+            .catch((error) => {
+                console.error("Error guardando en background: ", error);
+                // No mostramos error al usuario porque en offline es normal que quede pendiente
+            });
     }
 
   }, [saleItems, clearSale, firestore, toast]);
+
+    const clearCompletedSales = useCallback(async () => {
+        if (!firestore) return;
+        const salesRef = collection(firestore, 'completedSales');
+        try {
+            const querySnapshot = await getDocs(salesRef);
+            const batch = writeBatch(firestore);
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            toast({
+                title: "Reporte Reiniciado",
+                description: "Historial borrado correctamente."
+            });
+        } catch (error) {
+            console.error("Error clearing completed sales: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo reiniciar el reporte."
+            });
+        }
+    }, [firestore, toast]);
 
 
   const value = {
